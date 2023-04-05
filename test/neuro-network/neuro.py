@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from pandas._libs.lib import is_float
+from pandas.core.arrays import categorical
 
 
 test = pd.read_csv('./input/test_public.csv')
@@ -16,12 +18,69 @@ data = pd.concat([train1, train2], ignore_index=True)
 
 
 #preprocess
+#  import re
+#
+#  def remove_non_numeric(string):
+#       return re.sub('[^0-9\.]', '', string)
+
+#  data['work_year'] = data['work_year'].apply(remove_non_numeric).astype(int)
+
+
+#  delete irrelevant columes
+data = data.drop(['loan_id','user_id','earlies_credit_mon'], axis = 1)
+data['issue_date'] = pd.to_datetime(data['issue_date'], format='%Y/%m/%d')
+data['issue_date'] = data['issue_date'].astype(int) // 86400000000000
+
+
+#  print(data['earlies_credit_mon'].unique())
+
 import re
 
-def remove_non_numeric(string):
-     return re.sub('[^0-9\.]', '', string)
+import re
+def extract_number(x):
+    if not isinstance(x, str):
+        return x
+    numbers = re.findall(r'\d+', x)
+    if len(numbers) > 0:
+        return int(''.join(numbers))
+    else:
+        return None
 
-data['work_year'] = data['work_year'].apply(remove_non_numeric).astype(int)
+# 假设要提取的列名为'col1'，将提取出的数值型数据放回原来的列
+data['work_year'] = data['work_year'].apply(extract_number)
+data['class'] = data['class'].apply(lambda x: ord(x))
+data['sub_class'] = data['sub_class'].apply(extract_number)
+
+
+#  append blank
+data = data.apply(lambda x: x.fillna(x.median()) if pd.api.types.is_numeric_dtype(x) else x)
+
+
+
+
+data['work_year'] = data['work_year'].astype(int)
+
+
+def chinese_to_int(chinese_str):
+    if not isinstance(chinese_str, float):
+        return 0;
+    else:
+        return int(str(ord(chinese_str[0]))[0])
+
+data['employer_type'] = data['employer_type'].apply(chinese_to_int)
+data['industry'] = data['industry'].apply(chinese_to_int)
+data['work_type'] = data['work_type'].fillna(0).apply(chinese_to_int)
+
+#  data['employer_typeg'] = data['employer_type'].replace({'政府机构': 1, '幼教与中小学校': 2, '普通企业': 3, '世界五百强': 4, '高等教育机构': 5})
+
+
+print(data.dtypes)
+
+
+print('\n')
+print('\n')
+print(data['sub_class'].head)
+#  print(data.head)
 
 
 # 定义特征和标签列

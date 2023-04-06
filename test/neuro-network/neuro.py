@@ -5,6 +5,7 @@ from pandas.core.arrays import categorical
 
 
 test = pd.read_csv('./input/test_public.csv')
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -62,14 +63,14 @@ data['work_year'] = data['work_year'].astype(int)
 
 
 def chinese_to_int(chinese_str):
-    if not isinstance(chinese_str, float):
+    if  isinstance(chinese_str, float):
         return 0;
     else:
         return int(str(ord(chinese_str[0]))[0])
 
 data['employer_type'] = data['employer_type'].apply(chinese_to_int)
 data['industry'] = data['industry'].apply(chinese_to_int)
-data['work_type'] = data['work_type'].fillna(0).apply(chinese_to_int)
+data['work_type'] = data['work_type'].apply(chinese_to_int)
 
 #  data['employer_typeg'] = data['employer_type'].replace({'政府机构': 1, '幼教与中小学校': 2, '普通企业': 3, '世界五百强': 4, '高等教育机构': 5})
 
@@ -79,8 +80,8 @@ print(data.dtypes)
 
 print('\n')
 print('\n')
-print(data['sub_class'].head)
 #  print(data.head)
+print(data.shape[1])
 
 
 # 定义特征和标签列
@@ -88,7 +89,7 @@ features = data.iloc[:, :-1].values
 labels = data.iloc[:, -1].values
 
 # 划分训练集和测试集
-X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.1, random_state=354)
 
 # 将数据转换为PyTorch张量
 X_train = torch.FloatTensor(X_train)
@@ -100,9 +101,9 @@ y_test = torch.FloatTensor(y_test)
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(35, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 1)
+        self.fc1 = nn.Linear(41, 128)
+        self.fc2 = nn.Linear(128, 24)
+        self.fc3 = nn.Linear(24, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 

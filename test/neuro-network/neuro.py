@@ -15,6 +15,8 @@ from sklearn.model_selection import train_test_split
 # 加载数据集
 train1 = pd.read_csv('./input/train_public.csv')
 train2 = pd.read_csv('./input/train_internet.csv')
+train1['issue_date'] = pd.to_datetime(train1['issue_date'], format='%Y/%m/%d')
+train2['issue_date'] = pd.to_datetime(train2['issue_date'], format='%Y-%m-%d')
 data = pd.concat([train1, train2], ignore_index=True)
 
 
@@ -29,7 +31,8 @@ data = pd.concat([train1, train2], ignore_index=True)
 
 #  delete irrelevant columes
 data = data.drop(['loan_id','user_id','earlies_credit_mon'], axis = 1)
-data['issue_date'] = pd.to_datetime(data['issue_date'], format='%Y/%m/%d')
+
+#  data['issue_date'] = pd.to_datetime(data['issue_date'], format='%Y/%m/%d')
 data['issue_date'] = data['issue_date'].astype(int) // 86400000000000
 
 
@@ -75,6 +78,14 @@ data['work_type'] = data['work_type'].apply(chinese_to_int)
 #  data['employer_typeg'] = data['employer_type'].replace({'政府机构': 1, '幼教与中小学校': 2, '普通企业': 3, '世界五百强': 4, '高等教育机构': 5})
 
 
+#  preprocess block end
+
+
+counts_1 = data['is_default'].value_counts()[1]
+portion_1 = counts_1 / len(data)
+print(portion_1)
+
+
 print(data.dtypes)
 
 
@@ -102,8 +113,8 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(41, 128)
-        self.fc2 = nn.Linear(128, 24)
-        self.fc3 = nn.Linear(24, 1)
+        self.fc2 = nn.Linear(128, 32)
+        self.fc3 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
@@ -125,6 +136,8 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs.squeeze(), labels)
+            #  if labels.item == 1:
+            #      loss = loss / portion_1
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -156,4 +169,3 @@ optimizer = optim.Adam(net.parameters(), lr=0.001)
 
 # 开始训练
 train(net, optimizer, criterion, train_loader, test_loader, epochs=10)
-

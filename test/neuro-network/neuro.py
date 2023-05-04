@@ -15,8 +15,10 @@ from sklearn.model_selection import train_test_split
 # 加载数据集
 train1 = pd.read_csv('./input/train_public.csv')
 train2 = pd.read_csv('./input/train_internet.csv')
+
 train1['issue_date'] = pd.to_datetime(train1['issue_date'], format='%Y/%m/%d')
 train2['issue_date'] = pd.to_datetime(train2['issue_date'], format='%Y-%m-%d')
+
 data = pd.concat([train1, train2], ignore_index=True)
 
 
@@ -81,6 +83,15 @@ data['work_type'] = data['work_type'].apply(chinese_to_int)
 #  preprocess block end
 
 
+#  put the label to the last column
+cols = list(data.columns)
+cols.remove('is_default')
+cols.append('is_default')
+data = data.reindex(columns=cols)
+
+
+
+
 counts_1 = data['is_default'].value_counts()[1]
 portion_1 = counts_1 / len(data)
 print(portion_1)
@@ -112,8 +123,8 @@ y_test = torch.FloatTensor(y_test)
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(41, 128)
-        self.fc2 = nn.Linear(128, 32)
+        self.fc1 = nn.Linear(41, 96)
+        self.fc2 = nn.Linear(96, 32)
         self.fc3 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
@@ -127,8 +138,11 @@ class Net(nn.Module):
         x = self.sigmoid(x)
         return x
 
+import math 
+
 # 定义训练函数
 def train(net, optimizer, criterion, train_loader, test_loader, epochs):
+    #  n = 1;
     for epoch in range(epochs):
         net.train()
         train_loss = 0.0
@@ -136,11 +150,15 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs.squeeze(), labels)
+            train_loss += loss.item()
+            
+
+            #  loss = loss / math.sqrt(n);
+            #  n = n + 1;
             #  if labels.item == 1:
             #      loss = loss / portion_1
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
         train_loss /= len(train_loader)
 
         net.eval()
@@ -164,8 +182,11 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=32, shuffle=F
 
 # 初始化神经网络、损失函数和优化器
 net = Net()
+#  criterion = nn.BCEWithLogitsLoss()
 criterion = nn.BCELoss()
-optimizer = optim.Adam(net.parameters(), lr=0.001)
+#  criterion = nn.MSELoss()
+
+optimizer = optim.Adam(net.parameters(), lr=0.0001, weight_decay = 1e-5)
 
 # 开始训练
 train(net, optimizer, criterion, train_loader, test_loader, epochs=10)

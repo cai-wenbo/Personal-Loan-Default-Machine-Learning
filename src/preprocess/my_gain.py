@@ -53,7 +53,7 @@ def train_gain(data_x, gain_parameters):
   # Normalization
   norm_data, norm_parameters = normalization(data_x)
   pd_norm_parameters = pd.DataFrame(norm_parameters)
-  pd_norm_parameters.to_csv('norm_parameters.csv', index = False)
+  pd_norm_parameters.to_csv('data/analysis_data/norm_parameters.csv', index = False)
   
   norm_data_x = np.nan_to_num(norm_data)
 
@@ -168,7 +168,7 @@ def train_gain(data_x, gain_parameters):
     sess.run([G_solver, G_loss_temp, MSE_loss],
              feed_dict = {X: X_mb, M: M_mb, H: H_mb})
     if step % 2000 == 0:
-        saver.save(sess, 'model/gain.ckpt', global_step = step)
+        saver.save(sess, 'model/gain/gain.ckpt', global_step = step)
 
 
 
@@ -190,7 +190,7 @@ def impute_data(data_x):
 
     #  # Normalization
     #  load parameters
-    parameters = pd.read_csv('norm_parameters.csv')
+    parameters = pd.read_csv('data/analysis_data/norm_parameters.csv')
     parametras = parameters.to_numpy()
     norm_data, norm_parameters = normalization(data_x, parameters)
     norm_data_x = np.nan_to_num(norm_data)
@@ -224,7 +224,7 @@ def impute_data(data_x):
     saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
     #  saver.restore(sess, tf.train.latest_checkpoint('model'))
 
-    saver.restore(sess, tf.train.latest_checkpoint('model'))
+    saver.restore(sess, tf.train.latest_checkpoint('model/gain'))
 
 
 

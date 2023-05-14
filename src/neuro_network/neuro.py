@@ -12,11 +12,11 @@ import torch.optim as optim
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(91, 150)
-        self.dropout2 = nn.Dropout(0.3)
-        self.fc2 = nn.Linear(150, 50)
-        self.dropout2 = nn.Dropout(0.3)
-        self.fc3 = nn.Linear(50, 1)
+        self.fc1 = nn.Linear(78, 100)
+        self.dropout2 = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(100, 32)
+        #  self.dropout2 = nn.Dropout(0.2)
+        self.fc3 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
@@ -53,13 +53,14 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
     #  n = 1;
     #  upper_bound = torch.nextafter(torch.tensor(1.0), torch.tensor(0.0))
     #  lower_bound = torch.finfo(torch.float32).eps
-    eps = 1e-4
+    eps = 1e-6
     upper_bound = 1.0 - eps
     lower_bound = eps
 
     for epoch in range(epochs):
         net.train()
         train_loss = 0.0
+
         for i, (inputs, labels) in enumerate(train_loader):
             optimizer.zero_grad()
             outputs = net(inputs)
@@ -78,7 +79,7 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
             train_loss += loss.item()
             #  print(train_loss)
 
-            l1_weight = 1e-5
+            l1_weight = 23e-9
             to_regularise = []
             for param in net.parameters():
               to_regularise.append(param.view(-1))
@@ -88,7 +89,7 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
 
             loss.backward()
             optimizer.step()
-        train_loss /= len(train_loader)
+        train_loss /= len(train_loader.dataset)
 
         net.eval()
         test_loss = 0.0

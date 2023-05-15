@@ -12,10 +12,10 @@ import torch.optim as optim
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(78, 100)
-        self.dropout2 = nn.Dropout(0.4)
-        self.fc2 = nn.Linear(100, 32)
-        #  self.dropout2 = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(92, 120)
+        self.dropout2 = nn.Dropout(0.3)
+        self.fc2 = nn.Linear(120, 32)
+        self.dropout2 = nn.Dropout(0.2)
         self.fc3 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
@@ -49,13 +49,13 @@ def has_nan(tensor):
     return torch.isnan(tensor).any().item()
 
 #  train function
-def train(net, optimizer, criterion, train_loader, test_loader, epochs):
+def train(net, optimizer, criterion, train_loader, test_loader, epochs, l1_weight):
     #  n = 1;
-    #  upper_bound = torch.nextafter(torch.tensor(1.0), torch.tensor(0.0))
-    #  lower_bound = torch.finfo(torch.float32).eps
-    eps = 1e-6
-    upper_bound = 1.0 - eps
-    lower_bound = eps
+    upper_bound = torch.nextafter(torch.tensor(1.0), torch.tensor(0.0))
+    lower_bound = torch.finfo(torch.float32).eps
+    #  eps = 1e-6
+    #  upper_bound = 1.0 - eps
+    #  lower_bound = eps
 
     for epoch in range(epochs):
         net.train()
@@ -79,7 +79,6 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
             train_loss += loss.item()
             #  print(train_loss)
 
-            l1_weight = 23e-9
             to_regularise = []
             for param in net.parameters():
               to_regularise.append(param.view(-1))
@@ -105,6 +104,8 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
                 #      print("Error: NaN value detected.")
                 outputs = net(inputs)
                 outputs = outputs.squeeze()
+                #  print(labels)
+                #  print(outputs)
 
                 outputs = torch.where(outputs > upper_bound, upper_bound, outputs)
                 outputs = torch.where(outputs < lower_bound, lower_bound, outputs)
@@ -136,6 +137,7 @@ def train(net, optimizer, criterion, train_loader, test_loader, epochs):
 # create dataloaders
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
+from src.preprocess.utils import normalization
 
 def classifier(df): 
     #  prepare the tensor
@@ -145,6 +147,13 @@ def classifier(df):
     X = X.to_numpy() 
     y = y.to_numpy() 
 
+    #  load parameters
+    parameters = pd.read_csv('data/analysis_data/norm_parameters.csv')
+    parameters = parameters[:-1]
+    parametras = parameters.to_numpy()
+
+    X , norm_parameters = normalization(X, parameters)
+
     X = torch.FloatTensor(X)
     y = torch.FloatTensor(y)
 
@@ -153,7 +162,7 @@ def classifier(df):
 
     #  load net
     net = Net()
-    state_dict = torch.load('model/neuro_network.pt')
+    state_dict = torch.load('model/neuro_network/neuro_network.pt')
     net.load_state_dict(state_dict)
 
 
@@ -164,6 +173,7 @@ def classifier(df):
     with torch.no_grad():
         for inputs, labels  in data_loader:
             y = net(inputs)
+            #  print(inputs)
             #  print(y)
             output_list.append(y.detach().numpy())
 

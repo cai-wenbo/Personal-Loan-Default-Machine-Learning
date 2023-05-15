@@ -119,10 +119,11 @@ if os.path.exists(file_path):
 criterion = nn.BCELoss()
 
 #  def optimizer
-optimizer = optim.Adam(net.parameters(), lr=0.00001, weight_decay = 1e-3)
+optimizer = optim.Adam(net.parameters(), lr=0.001, weight_decay = 1e-3)
+            
 
 # start train
-train(net, optimizer, criterion, train_loader, test_loader, epochs=10)
+train(net, optimizer, criterion, train_loader, test_loader, epochs=10, l1_weight = 22e-5)
 
 
 #

@@ -338,6 +338,9 @@ def preprocess_1(df):
         df['monthly_payment'] = np.log1p(df['monthly_payment'])
     df['income'] = np.log1p(df['income'])
 
+    if 'debt_loan_ratio' in df.columns:
+        df['debt_loan_ratio'] = np.log1p(df['debt_loan_ratio'])
+
     if 'del_in_18month' in df.columns:
         df['del_in_18month'] = np.log1p(df['del_in_18month'])
     if 'known_outstanding_loan' in df.columns:

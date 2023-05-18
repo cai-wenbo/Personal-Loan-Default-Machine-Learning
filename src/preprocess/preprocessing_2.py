@@ -68,12 +68,12 @@ pd.options.display.max_rows = None
 
 
 #impute_data
-def preprocess_4(df):
+def preprocess_4(df, norm_path, model_path):
     data_x = df.drop(['loan_id', 'user_id'], axis = 1)
     df = data_x
 
     data_x = data_x.to_numpy()
-    imputed_data_x = impute_data(data_x)
+    imputed_data_x = impute_data(data_x, norm_path, model_path)
 
     imputed_data_x = pd.DataFrame(imputed_data_x)
     imputed_data_x.columns = df.columns

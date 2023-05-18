@@ -70,8 +70,13 @@ def normalization (data, parameters=None):
     
     # For each dimension
     for i in range(dim):
-      norm_data[:,i] = norm_data[:,i] - min_val[i]
-      norm_data[:,i] = norm_data[:,i] / (max_val[i] + 1e-6)  
+        norm_data[:,i] = np.where(norm_data[:,i] < min_val[i], min_val[i], norm_data[:,i])
+
+        norm_data[:,i] = norm_data[:,i] - min_val[i]
+
+        norm_data[:,i] = np.where(norm_data[:,i] > max_val[i], max_val[i], norm_data[:,i])
+
+        norm_data[:,i] = norm_data[:,i] / (max_val[i] + 1e-6)  
       
     norm_parameters = parameters    
       

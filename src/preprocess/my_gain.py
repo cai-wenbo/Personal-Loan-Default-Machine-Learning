@@ -6,11 +6,12 @@ sys.path.append('/home/null/project/py/pattern_recognition/Personal-Loan-Default
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
+import os
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from src.preprocess.utils import normalization, renormalization, rounding
+from src.preprocess.utils import normalization, renormalization
 from src.preprocess.utils import xavier_init
 from src.preprocess.utils import binary_sampler, uniform_sampler, sample_batch_index
 
@@ -33,9 +34,11 @@ def generator(x, m, theta_G):
 
 
 
-def train_gain(data_x, gain_parameters):
+def train_gain(data_x1, gain_parameters, gain_path):
+  data_x = data_x1.copy()
   graph = tf.Graph()
   # Define mask matrix
+  data_x = data_x.to_numpy()
   data_m = 1-np.isnan(data_x)
   
   # System parameters
@@ -51,10 +54,8 @@ def train_gain(data_x, gain_parameters):
   h_dim = int(dim)
   
   # Normalization
-  norm_data, norm_parameters = normalization(data_x)
-  pd_norm_parameters = pd.DataFrame(norm_parameters)
-  pd_norm_parameters.to_csv('data/analysis_data/norm_parameters.csv', index = False)
-  
+
+  norm_data = data_x
   norm_data_x = np.nan_to_num(norm_data)
 
 
@@ -146,6 +147,12 @@ def train_gain(data_x, gain_parameters):
   # Start Iterations
 
   saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
+
+  if os.path.exists(gain_path + 'checkpoint'):
+    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
+
+
+
   step = 0
   for it in tqdm(range(iterations)):    
     step += 1  
@@ -167,14 +174,16 @@ def train_gain(data_x, gain_parameters):
     _, G_loss_curr, MSE_loss_curr = \
     sess.run([G_solver, G_loss_temp, MSE_loss],
              feed_dict = {X: X_mb, M: M_mb, H: H_mb})
-    if step % 2000 == 0:
-        saver.save(sess, 'model/gain/gain.ckpt', global_step = step)
+    if step % 5000 == 0:
+        saver.save(sess, gain_path + 'gain.ckpt', global_step = step)
 
 
 
             
 
-def impute_data(data_x):
+def impute_data(data_x1,  gain_path):
+
+    data_x = data_x1.to_numpy()
     graph = tf.Graph()
     # Define mask matrix
     data_m = 1-np.isnan(data_x)
@@ -190,9 +199,7 @@ def impute_data(data_x):
 
     #  # Normalization
     #  load parameters
-    parameters = pd.read_csv('data/analysis_data/norm_parameters.csv')
-    parametras = parameters.to_numpy()
-    norm_data, norm_parameters = normalization(data_x, parameters)
+    norm_data = data_x
     norm_data_x = np.nan_to_num(norm_data)
 
     #  load generator
@@ -224,7 +231,7 @@ def impute_data(data_x):
     saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
     #  saver.restore(sess, tf.train.latest_checkpoint('model'))
 
-    saver.restore(sess, tf.train.latest_checkpoint('model/gain'))
+    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
 
 
 
@@ -262,10 +269,13 @@ def impute_data(data_x):
     imputed_data = data_m * norm_data_x + (1-data_m) * imputed_data
 
     # Renormalization
-    imputed_data = renormalization(imputed_data, norm_parameters)  
+    #  imputed_data = renormalization(imputed_data, norm_parameters)
 
     # Rounding
-    imputed_data = rounding(imputed_data, data_x)  
-          
+    #  imputed_data = rounding(imputed_data, data_x)
+
+    imputed_data = pd.DataFrame(imputed_data)
+    imputed_data.columns = data_x1.columns 
+
     return imputed_data
     

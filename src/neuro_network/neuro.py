@@ -12,19 +12,21 @@ import torch.optim as optim
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(92, 120)
-        self.dropout2 = nn.Dropout(0.3)
-        self.fc2 = nn.Linear(120, 32)
+        self.fc1 = nn.Linear(102, 150)
+        self.dropout2 = nn.Dropout(0.4)
+        self.fc2 = nn.Linear(150, 150)
         self.dropout2 = nn.Dropout(0.2)
-        self.fc3 = nn.Linear(32, 1)
+        self.fc3 = nn.Linear(150, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu(x)
+        #  x = nn.LeakyReLU(x)
         x = self.fc2(x)
         x = self.relu(x)
+        #  x = nn.LeakyReLU(x)
         x = self.fc3(x)
         x = self.sigmoid(x)
         return x
@@ -49,7 +51,7 @@ def has_nan(tensor):
     return torch.isnan(tensor).any().item()
 
 #  train function
-def train(net, optimizer, criterion, train_loader, test_loader, epochs, l1_weight):
+def train_neuro(net, optimizer, criterion, train_loader, test_loader, epochs, l1_weight):
     #  n = 1;
     upper_bound = torch.nextafter(torch.tensor(1.0), torch.tensor(0.0))
     lower_bound = torch.finfo(torch.float32).eps
@@ -139,7 +141,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 from src.preprocess.utils import normalization
 
-def classifier(df): 
+def classifier(df, norm_path, model_path): 
     #  prepare the tensor
     X = df.drop('is_default', axis=1)
     y = df['is_default'].astype(int)
@@ -148,7 +150,7 @@ def classifier(df):
     y = y.to_numpy() 
 
     #  load parameters
-    parameters = pd.read_csv('data/analysis_data/norm_parameters.csv')
+    parameters = pd.read_csv(norm_path)
     parameters = parameters[:-1]
     parametras = parameters.to_numpy()
 
@@ -162,7 +164,7 @@ def classifier(df):
 
     #  load net
     net = Net()
-    state_dict = torch.load('model/neuro_network/neuro_network.pt')
+    state_dict = torch.load(model_path)
     net.load_state_dict(state_dict)
 
 
@@ -209,83 +211,3 @@ import numpy as np
 #  from preprocess.my_gain import generator
 from src.preprocess.my_gain import impute_data
 #
-#  from preprocess.utils import normalization, renormalization, rounding
-#  from preprocess.utils import xavier_init
-#  from preprocess.utils import binary_sampler, uniform_sampler, sample_batch_index
-#
-#  #  from src.preprocess.preprocessing_1 import data_cleaning
-#  from preprocess.preprocessing_1 import preprocess_1
-#  from preprocess.preprocessing_1 import preprocess_2
-#  from preprocess.preprocessing_1 import preprocess_3
-#  from preprocess.preprocessing_2 import preprocess_4
-#  def preprocess_4(df):
-#      data_x = df.to_numpy()
-#      imputed_data = impute_data(data_x)
-#      imputed_data = pd.DataFrame(imputed_data)
-#
-#      imputed_data.columns = df.columns
-#      df.update(imputed_data)
-#      return df
-
-#  test_data = preprocess_1(test_data)
-#  test_data = preprocess_2(test_data)
-#  test_data = preprocess_3(test_data, train_data)
-#  test_data = preprocess_4(test_data)
-#
-#
-#  #  split
-#  X_train = train_data.drop('is_default', axis=1)
-#  y_train = train_data['is_default']
-#  X_test = test_data.drop('is_default', axis=1)
-#  y_test = test_data['is_default']
-#
-#  print(y_test.unique())
-#
-#  #  convert to numpy
-#  X_train = X_train.to_numpy()
-#  y_train = y_train.to_numpy()
-#  X_test = X_test.to_numpy()
-#  y_test = y_test.to_numpy()
-#
-#  #  convert to tensor
-#  X_train = torch.FloatTensor(X_train)
-#  X_test = torch.FloatTensor(X_test)
-#  y_train = torch.FloatTensor(y_train)
-#  y_test = torch.FloatTensor(y_test)
-#
-#  # create dataloaders
-#  from torch.utils.data import DataLoader
-#  from torch.utils.data import TensorDataset
-#
-#  train_dataset = TensorDataset(X_train, y_train)
-#  train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-#  test_dataset = TensorDataset(X_test, y_test)
-#  test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-#
-#  # initialize net
-#  net = Net()
-
-#  def creterion
-
-#  class weighting
-
-#  weights = torch.where(labels == 1, torch.Tensor([2]), torch.Tensor([1]))
-#  criterion.weight = weights
-#  class_weight = torch.Tensor([1/portion_1])
-#  criterion = nn.BCELoss(weight = class_weight)
-
-#  criterion = nn.BCELoss()
-#  #  criterion = nn.BCELoss()
-#  #  criterion = nn.MSELoss()
-#
-#  #  def optimizer
-#  optimizer = optim.Adam(net.parameters(), lr=0.001, weight_decay = 1e-4)
-#
-#
-#  # start train
-#  train(net, optimizer, criterion, train_loader, test_loader, epochs=10)
-#
-#  #save net
-#
-#  torch.save(net.state_dict(), '../../model/neuro_network.pt')
-

@@ -1,7 +1,6 @@
 # coding=utf-8
 #  citing: https://github.com/jsyoon0823/GAIN
 import sys
-sys.path.append('/home/null/project/py/pattern_recognition/Personal-Loan-Default-Machine-Learning/src')
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -11,9 +10,9 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from src.preprocess.utils import normalization, renormalization
-from src.preprocess.utils import xavier_init
-from src.preprocess.utils import binary_sampler, uniform_sampler, sample_batch_index
+from utils import normalization, renormalization
+from utils import xavier_init
+from utils import binary_sampler, uniform_sampler, sample_batch_index
 
 config = tf.ConfigProto(
     intra_op_parallelism_threads=1,

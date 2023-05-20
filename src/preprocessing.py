@@ -283,14 +283,24 @@ def convert(df1):
 
         df = df.drop(['issue_date'], axis = 1)
 
+    industry_dict = {'金融业': 0, '公共服务、社会组织': 1, '文化和体育业': 2, '信息传输、软件和信息技术服务业': 3, '制造业': 4, '住宿和餐饮业': 5, '建筑业': 6, '电力、热力生产供应业': 7, '房地产业': 8, '交通运输、仓储和邮政业': 9, '批发和零售业': 10, '农、林、牧、渔业': 11, '采矿业': 12, '国际组织': 13}
+    industry_cats = ['金融业', '公共服务、社会组织', '文化和体育业', '信息传输、软件和信息技术服务业', '制造业', '住宿和餐饮业', '建筑业', '电力、热力生产供应业', '房地产业', '交通运输、仓储和邮政业', '批发和零售业', '农、林、牧、渔业', '采矿业', '国际组织']
+
+    employer_type_dict = {'政府机构': 0, '世界五百强': 1, '幼教与中小学校': 2, '高等教育机构': 3, '普通企业': 4, '上市企业': 5}
+    employer_type_cats = ['政府机构', '世界五百强', '幼教与中小学校', '高等教育机构', '普通企业', '上市企业']
+
+    work_type_dict = {'职员': 0, '其他': 1, '工人': 2, '工程师': 3, '公务员': 4}
+    work_type_cats = ['职员', '其他', '工人', '工程师', '公务员']
+
+
     if 'employer_type' in df.columns:
-        df['employer_type'] = df['employer_type'].apply(chinese_to_string)
+        df['employer_type'] = df['employer_type'].apply(lambda x: employer_type_dict[x] if x in employer_type_cats else -1)
 
     if 'industry' in df.columns:
-        df['industry'] = df['industry'].apply(chinese_to_string)
+        df['industry'] = df['industry'].apply(lambda x: industry_dict[x] if x in industry_cats else -1)
         
     if 'work_type' in df.columns:
-        df['work_type'] = df['work_type'].apply(chinese_to_string)
+        df['work_type'] = df['work_type'].apply(lambda x: work_type_dict[x] if x in work_type_cats else -1)
 
     if 'work_year' in df.columns:
         df['work_over_10ys'] = np.where(df['work_year'].str.contains('\+'), 1, np.where(df['work_year'].notnull(), 0, np.nan))
@@ -490,7 +500,7 @@ def clean(df1):
         df['app_type'] = df['app_type'].apply(lambda x: x if x >= lower_app_type else np.nan)
 
     if 'f0' in df.columns:
-        upper_f0 = 30
+        upper_f0 = 50
         lower_f0= 0
         df['f0'] = df['f0'].apply(lambda x: x if x < upper_f0*3 else np.nan)
         df['f0'] = df['f0'].apply(lambda x: x if x <= upper_f0 else upper_f0)
@@ -506,7 +516,7 @@ def clean(df1):
         df['f1'] = df['f1'].apply(lambda x: x if x >= lower_f1 else np.nan)
 
     if 'f2' in df.columns:
-        upper_f2 = 50
+        upper_f2 = 80
         lower_f2= 0
         df['f2'] = df['f2'].apply(lambda x: x if x < upper_f2*3 else np.nan)
         df['f2'] = df['f2'].apply(lambda x: x if x <= upper_f2 else upper_f2)
@@ -514,7 +524,7 @@ def clean(df1):
         df['f2'] = df['f2'].apply(lambda x: x if x >= lower_f2 else np.nan)
 
     if 'f3' in df.columns:
-        upper_f3 = 30
+        upper_f3 = 50
         lower_f3= 0
         df['f3'] = df['f3'].apply(lambda x: x if x < upper_f3*3 else np.nan)
         df['f3'] = df['f3'].apply(lambda x: x if x <= upper_f3 else upper_f3)
@@ -530,7 +540,7 @@ def clean(df1):
         df['f4'] = df['f4'].apply(lambda x: x if x >= lower_f4 else np.nan)
 
     if 'f5' in df.columns:
-        upper_f5 = 8
+        upper_f5 = 20
         lower_f5= 0
         df['f5'] = df['f5'].apply(lambda x: x if x < upper_f5*3 else np.nan)
         df['f5'] = df['f5'].apply(lambda x: x if x <= upper_f5 else upper_f5)
@@ -678,6 +688,9 @@ def encoding(df1):
     df = df1.copy()
 
     encoding_list = ['work_type', 'employer_type', 'industry', 'censor_status', 'use', 'marriage', 'issue_dayofweek', 'issue_year_bin', 'house_exist_bin', 'earlies_credit_mon_bin']
+
+
+
 
     for col in encoding_list:
         if col in df.columns:

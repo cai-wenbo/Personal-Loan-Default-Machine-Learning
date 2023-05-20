@@ -1,7 +1,6 @@
 from functools import update_wrapper
 import sys
 from scipy.sparse import data
-sys.path.append('/home/null/project/py/pattern_recognition/Personal-Loan-Default-Machine-Learning/src')
 
 
 import torch
@@ -12,11 +11,11 @@ import torch.optim as optim
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(102, 150)
-        self.dropout2 = nn.Dropout(0.4)
-        self.fc2 = nn.Linear(150, 150)
+        self.fc1 = nn.Linear(102, 200)
         self.dropout2 = nn.Dropout(0.2)
-        self.fc3 = nn.Linear(150, 1)
+        self.fc2 = nn.Linear(200, 50)
+        self.dropout2 = nn.Dropout(0.2)
+        self.fc3 = nn.Linear(50, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
@@ -139,9 +138,9 @@ def train_neuro(net, optimizer, criterion, train_loader, test_loader, epochs, l1
 # create dataloaders
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
-from src.preprocess.utils import normalization
+#  from utils import normalization
 
-def classifier(df, norm_path, model_path): 
+def classifier(df,  model_path): 
     #  prepare the tensor
     X = df.drop('is_default', axis=1)
     y = df['is_default'].astype(int)
@@ -149,12 +148,12 @@ def classifier(df, norm_path, model_path):
     X = X.to_numpy() 
     y = y.to_numpy() 
 
-    #  load parameters
-    parameters = pd.read_csv(norm_path)
-    parameters = parameters[:-1]
-    parametras = parameters.to_numpy()
+    #  #  load parameters
+    #  parameters = pd.read_csv(norm_path)
+    #  parameters = parameters[:-1]
+    #  parametras = parameters.to_numpy()
 
-    X , norm_parameters = normalization(X, parameters)
+    #  X , norm_parameters = normalization(X, parameters)
 
     X = torch.FloatTensor(X)
     y = torch.FloatTensor(y)
@@ -209,5 +208,4 @@ import numpy as np
 #  from tqdm import tqdm
 
 #  from preprocess.my_gain import generator
-from src.preprocess.my_gain import impute_data
 #

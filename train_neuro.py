@@ -5,16 +5,24 @@ sys.path.append('/home/null/project/py/pattern_recognition/Personal-Loan-Default
 import pandas as pd
 import numpy as np
 pd.options.display.max_rows = None
+pd.set_option('display.max_columns', None)
 
 
-from src.preprocess.my_gain import train_gain
-from src.preprocess.preprocessing_1 import preprocess_1
-from src.preprocess.preprocessing_1 import preprocess_2
-from src.preprocess.preprocessing_1 import preprocess_3
-from src.preprocess.preprocessing_2 import preprocess_4
-from src.preprocess.utils import normalization
-from src.neuro_network.neuro import train
-from src.neuro_network.neuro import Net
+from src.preprocessing import convert, embedding
+from src.preprocessing import clean
+from src.preprocessing import feature_extract
+from src.preprocessing import binning
+from src.preprocessing import encoding
+from src.preprocessing import embedding
+from src.preprocessing import get_category_dict
+from src.preprocessing import get_embedding_dicts
+from src.preprocessing import get_category_proportions
+from src.preprocessing import aligning
+from src.preprocessing import normalization
+from src.my_gain import train_gain
+from src.my_gain import impute_data
+from src.neuro import Net, train_neuro
+from src.filter import filte
 
 import torch
 import torch.nn as nn
@@ -22,8 +30,11 @@ import torch.optim as optim
 
 
 #  load data
-train_data = pd.read_csv('data/cache/train_data_3.csv')
+train_data = pd.read_csv('data/cache/train_data_4.csv')
 test_data = pd.read_csv('data/cache/test_data_1.csv')
+
+#  train_data = filte(train_data, 'model/filter/public_filter.pt', 0.05)
+
 test_data['issue_date'] = pd.to_datetime(test_data['issue_date'], format='%Y-%m-%d')
 
 
@@ -38,10 +49,19 @@ test_data['issue_date'] = pd.to_datetime(test_data['issue_date'], format='%Y-%m-
 #      df.update(imputed_data)
 #      return df
 
-test_data = preprocess_1(test_data)
-test_data = preprocess_2(test_data)
-test_data = preprocess_3(test_data)
-test_data = preprocess_4(test_data)
+test_data = convert(test_data)
+test_data = clean(test_data)
+test_data =  feature_extract(test_data)
+test_data, bin_edges = binning(test_data, 'data/analysis_data/bin_edges.pkl')
+test_data = encoding(test_data)
+test_data = embedding(test_data, 'data/analysis_data/saved_dicts.pkl')
+test_data = aligning(test_data, 'data/analysis_data/cols.txt')
+
+import pickle
+with open('data/analysis_data/norm_parameters.pkl', 'rb') as f:
+    norm_parameters = pickle.load(f)
+test_data, norm_parameters = normalization(test_data, norm_parameters)
+test_data = impute_data(test_data, 'model/gain')
 
 counts_1 = test_data['is_default'].value_counts()[1]
 portion_1 = counts_1 / len(test_data)
@@ -55,35 +75,18 @@ y_train = train_data['is_default'].astype(int)
 X_test = test_data.drop('is_default', axis=1)
 y_test = test_data['is_default'].astype(int)  
 
+#  print(X_train.describe())
+#  print(X_test.describe())
+
+print('ok')
+
+
+
 #  convert to numpy
 X_train = X_train.to_numpy()
 y_train = y_train.to_numpy()
 X_test = X_test.to_numpy()
 y_test = y_test.to_numpy()
-
-#  #  normalize X
-
-#  load parameters
-parameters = pd.read_csv('data/analysis_data/norm_parameters.csv')
-parameters = parameters[:-1]
-parametras = parameters.to_numpy()
-
-X_train , norm_parameters = normalization(X_train, parameters)
-X_test , norm_parameters = normalization(X_test, parameters)
-
-print('ok')
-#  print(np.unique(X_train['total_amount']))
-
-
-#
-#  print(X_train.dtypes)
-#  print(y_train.unique())
-#  print(X_test.dtypes)
-#  print(y_test.unique())
-#
-#  print(X_test.head())
-
-
 
 
 
@@ -98,7 +101,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
 train_dataset = TensorDataset(X_train, y_train)
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=12, shuffle=True)
 test_dataset = TensorDataset(X_test, y_test)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
@@ -116,14 +119,16 @@ if os.path.exists(file_path):
 
 
 #def criterion
+#  class_weight = torch.Tensor([10])
+#  criterion = nn.BCELoss(weight = class_weight)
 criterion = nn.BCELoss()
 
 #  def optimizer
-optimizer = optim.Adam(net.parameters(), lr=0.001, weight_decay = 1e-3)
+optimizer = optim.Adam(net.parameters(), lr=0.005, weight_decay = 7e-5)
             
 
 # start train
-train(net, optimizer, criterion, train_loader, test_loader, epochs=10, l1_weight = 22e-5)
+train_neuro(net, optimizer, criterion, train_loader, test_loader, epochs=10, l1_weight = 95e-6)
 
 
 #

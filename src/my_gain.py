@@ -36,7 +36,6 @@ def generator(x, m, theta_G):
 
 def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None):
   sess = tf.Session(config = config)
-  #  sess.run(tf.global_variables_initializer())
 
   data_x = data_x1.copy()
   graph = tf.Graph()
@@ -102,6 +101,7 @@ def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None)
   G_b3 = tf.Variable(tf.zeros(shape = [dim]))
 
   
+  sess.run(tf.global_variables_initializer())
   theta_G = [G_W1, G_W2, G_W3, G_b1, G_b2, G_b3]
   
   ## GAIN functions
@@ -159,7 +159,7 @@ def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None)
   #  saver = tf.train.Saver()
 
   if os.path.exists(gain_path + 'checkpoint'):
-    #  print('restored')
+    print('restored')
     saver.restore(sess, tf.train.latest_checkpoint(gain_path))
 
 
@@ -193,6 +193,7 @@ def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None)
 
 def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
+    sess = tf.Session(config = config)
     data_x = data_x1.to_numpy()
     graph = tf.Graph()
     # Define mask matrix
@@ -225,9 +226,20 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
     #  norm_data = data_x
     #  norm_data_x = np.nan_to_num(norm_data)
 
-    #  load generator
-    sess = tf.Session(config = config)
-    sess.run(tf.global_variables_initializer())
+    # Discriminator variables
+    D_W1 = tf.Variable(xavier_init([dim*2, h_dim])) # Data + Hint as inputs
+    D_b1 = tf.Variable(tf.zeros(shape = [h_dim]))
+
+    D_W2 = tf.Variable(xavier_init([h_dim, h_dim]))
+    D_b2 = tf.Variable(tf.zeros(shape = [h_dim]))
+
+    D_W3 = tf.Variable(xavier_init([h_dim, dim]))
+    D_b3 = tf.Variable(tf.zeros(shape = [dim]))  # Multi-variate outputs
+
+    theta_D = [D_W1, D_W2, D_W3, D_b1, D_b2, D_b3]
+
+    #Generator variables
+    # Data + Mask as inputs (Random noise is in missing components)
     G_W1 = tf.Variable(xavier_init([dim*2, h_dim]))  
     G_b1 = tf.Variable(tf.zeros(shape = [h_dim]))
 
@@ -238,6 +250,8 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
     G_b3 = tf.Variable(tf.zeros(shape = [dim]))
   
   
+    saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
+    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
   
     #  #Generator variables
     #  # Data + Mask as inputs (Random noise is in missing components)
@@ -260,7 +274,6 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
     theta_G = [G_W1, G_W2, G_W3, G_b1, G_b2, G_b3]
 
-    saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
 
     def generator(x,m):
         # Concatenate Mask and Data
@@ -274,7 +287,6 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
 
   
-    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
     ## GAIN architecture   
     # Input placeholders
     # Data vector

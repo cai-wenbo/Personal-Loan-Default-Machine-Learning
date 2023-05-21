@@ -10,9 +10,10 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from utils import normalization, renormalization
-from utils import xavier_init
-from utils import binary_sampler, uniform_sampler, sample_batch_index
+from src.utils import normalization, renormalization, rounding
+from src.utils import xavier_init
+from src.utils import binary_sampler, uniform_sampler, sample_batch_index
+import pickle
 
 config = tf.ConfigProto(
     intra_op_parallelism_threads=1,
@@ -33,7 +34,10 @@ def generator(x, m, theta_G):
 
 
 
-def train_gain(data_x1, gain_parameters, gain_path):
+def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None):
+  sess = tf.Session(config = config)
+  #  sess.run(tf.global_variables_initializer())
+
   data_x = data_x1.copy()
   graph = tf.Graph()
   # Define mask matrix
@@ -52,10 +56,16 @@ def train_gain(data_x1, gain_parameters, gain_path):
   # Hidden state dimensions
   h_dim = int(dim)
   
-  # Normalization
+  if norm_parameters_path is not None:
+      # Normalization
+      norm_data, norm_parameters = normalization(data_x)
+      norm_data_x = np.nan_to_num(norm_data)
+      with open(norm_parameters_path, 'wb') as f:
+          pickle.dump(norm_parameters, f)
 
-  norm_data = data_x
-  norm_data_x = np.nan_to_num(norm_data)
+  else:
+      norm_data = data_x
+      norm_data_x = np.nan_to_num(norm_data)
 
 
   
@@ -90,6 +100,7 @@ def train_gain(data_x1, gain_parameters, gain_path):
   
   G_W3 = tf.Variable(xavier_init([h_dim, dim]))
   G_b3 = tf.Variable(tf.zeros(shape = [dim]))
+
   
   theta_G = [G_W1, G_W2, G_W3, G_b1, G_b2, G_b3]
   
@@ -140,14 +151,15 @@ def train_gain(data_x1, gain_parameters, gain_path):
   G_solver = tf.train.AdamOptimizer().minimize(G_loss, var_list=theta_G)
   
   ## Iterations
-  sess = tf.Session(config = config)
   sess.run(tf.global_variables_initializer())
    
   # Start Iterations
 
   saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
+  #  saver = tf.train.Saver()
 
   if os.path.exists(gain_path + 'checkpoint'):
+    #  print('restored')
     saver.restore(sess, tf.train.latest_checkpoint(gain_path))
 
 
@@ -177,10 +189,9 @@ def train_gain(data_x1, gain_parameters, gain_path):
         saver.save(sess, gain_path + 'gain.ckpt', global_step = step)
 
 
-
             
 
-def impute_data(data_x1,  gain_path):
+def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
     data_x = data_x1.to_numpy()
     graph = tf.Graph()
@@ -197,44 +208,59 @@ def impute_data(data_x1,  gain_path):
 
 
     #  # Normalization
-    #  load parameters
-    norm_data = data_x
-    norm_data_x = np.nan_to_num(norm_data)
+    # Normalization
+    if norm_parameters_path is not None:
+        # Normalization
+        with open(norm_parameters_path, 'rb') as f:
+            norm_parameters = pickle.load(f)
+        norm_data, norm_parameters = normalization(data_x, norm_parameters)
+        norm_data_x = np.nan_to_num(norm_data)
+
+    else:
+        norm_data = data_x
+        norm_data_x = np.nan_to_num(norm_data)
+
+
+    #  #  load parameters
+    #  norm_data = data_x
+    #  norm_data_x = np.nan_to_num(norm_data)
 
     #  load generator
     sess = tf.Session(config = config)
+    sess.run(tf.global_variables_initializer())
     G_W1 = tf.Variable(xavier_init([dim*2, h_dim]))  
     G_b1 = tf.Variable(tf.zeros(shape = [h_dim]))
-  
+
     G_W2 = tf.Variable(xavier_init([h_dim, h_dim]))
     G_b2 = tf.Variable(tf.zeros(shape = [h_dim]))
-  
+
     G_W3 = tf.Variable(xavier_init([h_dim, dim]))
     G_b3 = tf.Variable(tf.zeros(shape = [dim]))
   
   
   
-    #Generator variables
-    # Data + Mask as inputs (Random noise is in missing components)
-    G_W1 = tf.Variable(xavier_init([dim*2, h_dim]))  
-    G_b1 = tf.Variable(tf.zeros(shape = [h_dim]))
-  
-    G_W2 = tf.Variable(xavier_init([h_dim, h_dim]))
-    G_b2 = tf.Variable(tf.zeros(shape = [h_dim]))
-  
-    G_W3 = tf.Variable(xavier_init([h_dim, dim]))
-    G_b3 = tf.Variable(tf.zeros(shape = [dim]))
+    #  #Generator variables
+    #  # Data + Mask as inputs (Random noise is in missing components)
+    #  G_W1 = tf.Variable(xavier_init([dim*2, h_dim]))
+    #  G_b1 = tf.Variable(tf.zeros(shape = [h_dim]))
+  #
+    #  G_W2 = tf.Variable(xavier_init([h_dim, h_dim]))
+    #  G_b2 = tf.Variable(tf.zeros(shape = [h_dim]))
+  #
+    #  G_W3 = tf.Variable(xavier_init([h_dim, dim]))
+    #  G_b3 = tf.Variable(tf.zeros(shape = [dim]))
 
 
     #  saver = tf.train.import_meta_graph('model/gain.ckpt')
-    saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
+    #  saver = tf.train.Saver()
     #  saver.restore(sess, tf.train.latest_checkpoint('model'))
 
-    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
 
 
 
     theta_G = [G_W1, G_W2, G_W3, G_b1, G_b2, G_b3]
+
+    saver = tf.train.Saver([G_b1, G_b2, G_b3, G_W1, G_W2, G_W3])
 
     def generator(x,m):
         # Concatenate Mask and Data
@@ -248,6 +274,7 @@ def impute_data(data_x1,  gain_path):
 
 
   
+    saver.restore(sess, tf.train.latest_checkpoint(gain_path))
     ## GAIN architecture   
     # Input placeholders
     # Data vector
@@ -267,11 +294,12 @@ def impute_data(data_x1,  gain_path):
 
     imputed_data = data_m * norm_data_x + (1-data_m) * imputed_data
 
-    # Renormalization
-    #  imputed_data = renormalization(imputed_data, norm_parameters)
+    #  Renormalization
+    if norm_parameters_path is not None:
+        imputed_data = renormalization(imputed_data, norm_parameters)
 
     # Rounding
-    #  imputed_data = rounding(imputed_data, data_x)
+    imputed_data = rounding(imputed_data, data_x)
 
     imputed_data = pd.DataFrame(imputed_data)
     imputed_data.columns = data_x1.columns 

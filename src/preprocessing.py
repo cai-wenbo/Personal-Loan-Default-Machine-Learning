@@ -631,9 +631,9 @@ def binning(df1, binning_path = None):
     df = df1.copy()
 
     number_of_bins_of_class = 5
-    number_of_bins_of_issue_year = 5
-    number_of_bins_of_house_exist = 3
-    number_of_bins_of_earlies_credit_mon = 5
+    number_of_bins_of_issue_year = 8
+    number_of_bins_of_house_exist = 4
+    number_of_bins_of_earlies_credit_mon            = 7
 
     #  issue_year_labels = range(number_of_bins_of_issue_year)
     #  house_exist_labels = range(number_of_bins_of_house_exist)
@@ -737,6 +737,7 @@ def embedding(df1, embedding_path):
     if 'title' in df.columns:
         df = extract_category(df, 'title', title_proportions, title_dict, max_number_of_cats_of_title)
 
+
     #  put the label to the last column
     if 'is_default' in df.columns:
         cols = list(df.columns)
@@ -745,6 +746,102 @@ def embedding(df1, embedding_path):
         df = df.reindex(columns=cols)
 
     return df
+
+def embed_category(df1, col, col_proportions, col_dict, n):
+    #  print(col_proportions)
+    #  print(col_dict)
+    df = df1.copy()
+    p = 1.0 / n
+
+    #  cols = []
+    #  current_categories = []
+    #  current_col_proportion = 0.0
+    #  remaining_proportion = 1.0
+    cats = []
+    cats_dict = {}
+
+    print(col)
+
+    i = 0
+    for category in col_proportions:
+        cats.append(category)
+        if col_proportions[category] > p:
+            col_dict[category] = i
+            i = i + 1
+            print(category)
+        else:
+            col_dict[category] = i
+
+    print(col_dict)
+    #  print(cats)
+
+        #  proportion = col_proportions[category]
+        #  current_categories.append(category)
+        #  current_col_proportion += proportion
+        #  if (current_col_proportion >= p):
+        #      cols.append(list(current_categories))
+        #      remaining_proportion -= current_col_proportion
+        #      current_categories = []
+        #      current_col_proportion = 0.0
+                
+    #  cols.append(list(current_categories))
+            
+    #  new_df = pd.DataFrame()
+    #  for i, categories in enumerate(cols):
+    df[col] = df[col].apply(lambda x: col_dict[x] if x in cats else -1)
+        #  new_df[col + '_' + str(i+1)] = df[col].apply(lambda x: col_dict[x] if x in categories else 0)
+        
+    #  df = pd.concat([df, new_df], axis= 1)
+    #  df = df.drop([col], axis = 1)
+
+    return df
+
+def cat_embedding(df1, embedding_path):
+    df = df1.copy()
+
+    max_number_of_cats_of_post_code = 20
+    max_number_of_cats_of_region = 20
+    max_number_of_cats_of_title = 20
+    with open(embedding_path, 'rb') as f:
+        #  issue_year_proportions = pickle.load(f)
+        #  issue_dayofweek_proportions = pickle.load(f)
+        #  use_proportions = pickle.load(f)
+        post_code_proportions = pickle.load(f)
+        region_proportions = pickle.load(f)
+        title_proportions = pickle.load(f)
+        #  earlies_credit_mon_proportions = pickle.load(f)
+
+        #  issue_year_dict = pickle.load(f)
+        #  issue_dayofweek_dict = pickle.load(f)
+        #  use_dict = pickle.load(f)
+        post_code_dict = pickle.load(f)
+        region_dict = pickle.load(f)
+        title_dict = pickle.load(f)
+        #  earlies_credit_mon_dict = pickle.load(f)
+
+    embedding_list = ['post_code', 'region', 'title']
+    if 'post_code' in df.columns:
+        df = embed_category(df, 'post_code', post_code_proportions, post_code_dict, max_number_of_cats_of_post_code)
+    if 'region' in df.columns:
+        df = embed_category(df, 'region', region_proportions, region_dict, max_number_of_cats_of_region)
+    if 'title' in df.columns:
+        df = embed_category(df, 'title', title_proportions, title_dict, max_number_of_cats_of_title)
+
+
+    #  put the label to the last column
+    if 'is_default' in df.columns:
+        cols = list(df.columns)
+        cols.remove('is_default')
+        cols.append('is_default')
+        df = df.reindex(columns=cols)
+
+    return df
+
+
+
+
+
+
 
 def aligning(df1, aligning_path):
     df = df1.copy()
@@ -863,3 +960,71 @@ def standardization(df1, parameters=None):
   
     return df, std_parameters
     
+
+def fill_nan_with_neg(df1):
+    df = df1.copy()
+    for col in df.columns:
+        df[col].fillna(-1, inplace=True)
+    return df
+
+
+#  from sklearn.cluster import OPTICS
+#  def cluster(df1, col_list, model = None):
+#
+#      data = df1[col_list]
+#
+#      if model is None:
+#          model = OPTICS(min_samples=2)
+#          model.fit(data)
+#          result = model.labels_
+#
+#      else:
+#          result = model.predict(data)
+#
+#      return result, model
+#
+#  def clusterlize(df1, model_path = None):
+#      df = df1.copy()
+#
+#      cols1= ['post_code', 'region']
+#      #  cols2 = ['work_type', 'industry', 'employer_type']
+#
+#      limit1 = 30
+#
+#      if model_path is None:
+#          result1, model1 = cluster(df, cols1)
+#          #  result1, model1 = cluster(df, cols1)
+#
+#      else:
+#          with open(model_path, 'rb') as f:
+#              #  issue_year_proportions = pickle.load(f)
+#              #  issue_dayofweek_proportions = pickle.load(f)
+#              #  use_proportions = pickle.load(f)
+#              model1 = pickle.load(f)
+#
+#          result1, _ = cluster(df, cols1, model)
+#
+#      return df
+#
+#
+#      with open(embedding_path, 'wb') as f:
+#          #  pickle.dump(issue_year_proportions, f)
+#          #  pickle.dump(issue_dayofweek_proportions, f)
+#          #  pickle.dump(use_proportions, f)
+#          pickle.dump(post_code_proportions, f)
+#
+#
+#
+#
+#
+#
+
+
+
+
+
+
+
+
+
+

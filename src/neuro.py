@@ -11,10 +11,10 @@ import torch.optim as optim
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(103, 50)
+        self.fc1 = nn.Linear(95, 50)
         self.dropout2 = nn.Dropout(0.2)
         self.fc2 = nn.Linear(50, 50)
-        self.dropout2 = nn.Dropout(0.2)
+        #  self.dropout2 = nn.Dropout(0.2)
         self.fc3 = nn.Linear(50, 1)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()

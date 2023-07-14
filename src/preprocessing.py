@@ -33,51 +33,51 @@ pd.options.display.max_rows = None
 
 
 
-#  preprocesssing
+#  #  preprocesssing
 
-#  total_loan
-#  year_of_loan
-#  interest
-#  monthly_payment
-#  class
-#  sub_class
-#  issue_date
-#  work_type
-#  employer_type
-#  industry
-#  work_year
-#  house_exist
-#  censor_status
-#  use
-#  post_code
-#  region
-#  title
-#  offsprings
-#  marriage
-#  debt_loan_ratio
-#  del_in_18month
-#  scoring_low
-#  scoring_high
-#  known_outstanding_loan
-#  known_dero
-#  pub_dero_bankrup
-#  recircle_b
-#  recircle_u
-#  initial_list_status
-#  app_type
-#  policy_code
-#  f0
-#  f1
-#  f2
-#  f3
-#  f4
-#  f5
-#  early_return
-#  early_return_amount
-#  early_return_amount_3mon
-#  house_loan_status
+#  #  total_loan
+#  #  year_of_loan
+#  #  interest
+#  #  monthly_payment
+#  #  class
+#  #  sub_class
+#  #  issue_date
+#  #  work_type
+#  #  employer_type
+#  #  industry
+#  #  work_year
+#  #  house_exist
+#  #  censor_status
+#  #  use
+#  #  post_code
+#  #  region
+#  #  title
+#  #  offsprings
+#  #  marriage
+#  #  debt_loan_ratio
+#  #  del_in_18month
+#  #  scoring_low
+#  #  scoring_high
+#  #  known_outstanding_loan
+#  #  known_dero
+#  #  pub_dero_bankrup
+#  #  recircle_b
+#  #  recircle_u
+#  #  initial_list_status
+#  #  app_type
+#  #  policy_code
+#  #  f0
+#  #  f1
+#  #  f2
+#  #  f3
+#  #  f4
+#  #  f5
+#  #  early_return
+#  #  early_return_amount
+#  #  early_return_amount_3mon
+#  #  house_loan_status
 
-#  is_default
+#  #  is_default
 
 
 #  #split to train_data and test_data
@@ -107,13 +107,13 @@ def chinese_to_string(chinese_str):
     if  isinstance(chinese_str, float):
         return "NaN";
     else:
-        s = "" 
+        s = ""
         char1 = chr(ord('a') + int(str(ord(chinese_str[0]))[0]))
         char2 = chr(ord('a') + int(str(ord(chinese_str[0]))[1]))
         char3 = chr(ord('a') + int(str(ord(chinese_str[1]))[0]))
         char4 = chr(ord('a') + int(str(ord(chinese_str[1]))[1]))
         s = s + char1 + char2 + char3 + char4
-        return s 
+        return s
 
 def one_hot_encoding(df1, col):
     df = df1.copy()
@@ -121,7 +121,7 @@ def one_hot_encoding(df1, col):
     df = df.drop([col], axis = 1)
     df = pd.concat([df, one_hot_col], axis = 1)
     return df
-    
+
 
 
 
@@ -189,8 +189,10 @@ def get_embedding_dicts(df1, embedding_path):
         pickle.dump(region_dict, f)
         pickle.dump(title_dict, f)
         #  pickle.dump(earlies_credit_mon_dict, f)
+    
 
 
+#  distribute the cats in col to at most n cols
 def extract_category(df1, col, col_proportions, col_dict, n):
     #  print(col_proportions)
     #  print(col_dict)
@@ -211,19 +213,21 @@ def extract_category(df1, col, col_proportions, col_dict, n):
             remaining_proportion -= current_col_proportion
             current_categories = []
             current_col_proportion = 0.0
-                
+
     cols.append(list(current_categories))
-            
+
     new_df = pd.DataFrame()
     for i, categories in enumerate(cols):
         new_df[col + '_' + str(i+1)] = df[col].apply(lambda x: col_dict[x] if x in categories else 0)
-        
+
     df = pd.concat([df, new_df], axis= 1)
     df = df.drop([col], axis = 1)
 
     return df
 
 import pickle
+
+
 
 def convert(df1):
     df = df1.copy()
@@ -298,7 +302,7 @@ def convert(df1):
 
     if 'industry' in df.columns:
         df['industry'] = df['industry'].apply(lambda x: industry_dict[x] if x in industry_cats else -1)
-        
+
     if 'work_type' in df.columns:
         df['work_type'] = df['work_type'].apply(lambda x: work_type_dict[x] if x in work_type_cats else -1)
 
@@ -321,7 +325,7 @@ def convert(df1):
 def clean(df1):
     df = df1.copy()
 
-    
+
     if 'upper_total_loan' in df.columns:
         upper_total_loan = 50000
         #  lower_total_loan= 50000
@@ -345,7 +349,7 @@ def clean(df1):
         #  df.loc[:,'interest'] = df.loc[:,'interest'].apply(lambda x: x if x > lower_interest else np.nan)
 
     if 'monthly_payment' in df.columns:
-        upper_monthly_payment = 2000 
+        upper_monthly_payment = 2000
         df['monthly_payment'] = df['monthly_payment'].apply(lambda x: x if x < upper_monthly_payment*10 else np.nan)
         df['monthly_payment'] = df['monthly_payment'].apply(lambda x: x if x < upper_monthly_payment else upper_monthly_payment)
         df['monthly_payment'] = df['monthly_payment'].apply(lambda x: x if x > 0 else np.nan)
@@ -359,13 +363,13 @@ def clean(df1):
 
     if 'upper_sub_class' in df.columns:
         upper_sub_class = 5
-        lower_sub_class= 1 
+        lower_sub_class= 1
         df['sub_class'] = df['sub_class'].apply(lambda x: x if x <= upper_sub_class else np.nan)
         df['sub_class'] = df['sub_class'].apply(lambda x: x if x >= lower_sub_class else np.nan)
 
     if 'upper_work_year' in df.columns:
         upper_work_year = 10
-        lower_work_year= 0 
+        lower_work_year= 0
         df['work_year'] = df['work_year'].apply(lambda x: x if x <= upper_work_year else upper_work_year)
         df['work_year'] = df['work_year'].apply(lambda x: x if x >= lower_work_year else np.nan)
 
@@ -401,7 +405,7 @@ def clean(df1):
         #  df['offsprings'] = df['offsprings'].apply(lambda x: x if x < upper_offsprings*10 else np.nan)
         df['offsprings'] = df['offsprings'].apply(lambda x: x if x <= upper_offsprings else np.nan)
         df['offsprings'] = df['offsprings'].apply(lambda x: x if x >= lower_offsprings else np.nan)
-    
+
     if 'upper_marriage' in df.columns:
         upper_marriage = 3
         lower_marriage= 0
@@ -415,10 +419,10 @@ def clean(df1):
         df['debt_loan_ratio'] = df['debt_loan_ratio'].apply(lambda x: x if x < upper_radio*10 else upper_radio)
         df['debt_loan_ratio'] = df['debt_loan_ratio'].apply(lambda x: x if x < upper_radio else upper_radio)
         df['debt_loan_ratio'] = df['debt_loan_ratio'].apply(lambda x: x if x > 0 else np.nan)
-        df['debt_loan_ratio'] = df['debt_loan_ratio'].apply(lambda x: x if x > lower_radio else lower_radio)    
-    
+        df['debt_loan_ratio'] = df['debt_loan_ratio'].apply(lambda x: x if x > lower_radio else lower_radio)
+
     if 'del_in_18month' in df.columns:
-        upper_del_in_18month = 20 
+        upper_del_in_18month = 20
         #  lower_del_in_18month= 3
         df['del_in_18month'] = df['del_in_18month'].apply(lambda x: x if x < upper_del_in_18month*2 else np.nan)
         df['del_in_18month'] = df['del_in_18month'].apply(lambda x: x if x < upper_del_in_18month else upper_del_in_18month)
@@ -440,7 +444,7 @@ def clean(df1):
         df['scoring_high'] = df['scoring_high'].apply(lambda x: x if x < upper_scoring_high else upper_scoring_high)
         #  df.loc[:,'scoring_high'] = df.loc[:,'scoring_high'].apply(lambda x: x if x > 0 else np.nan)
         df['scoring_high'] = df['scoring_high'].apply(lambda x: x if x > lower_scoring_high else lower_scoring_high)
- 
+
     if 'known_outstanding_loan' in df.columns:
         upper_known_outstanding_loan = 60
         #  lower_known_outstanding_loan= 3
@@ -476,7 +480,7 @@ def clean(df1):
         df['recircle_b'] = df['recircle_b'].apply(lambda x: x if x > lower_recircle_b else lower_recircle_b)
 
     if 'recircle_u' in df.columns:
-        upper_recircle_u = 150 
+        upper_recircle_u = 150
         lower_recircle_u= 20
         df['recircle_u'] = df['recircle_u'].apply(lambda x: x if x < upper_recircle_u*2 else np.nan)
         df['recircle_u'] = df['recircle_u'].apply(lambda x: x if x < upper_recircle_u else upper_recircle_u)
@@ -490,7 +494,7 @@ def clean(df1):
         df['initial_list_status'] = df['initial_list_status'].apply(lambda x: x if x <= upper_initial_list_status else np.nan)
         #  df.loc[:,'initial_list_status'] = df.loc[:,'initial_list_status'].apply(lambda x: x if x > 0 else np.nan)
         df['initial_list_status'] = df['initial_list_status'].apply(lambda x: x if x >= lower_initial_list_status else np.nan)
-    
+
     if 'app_type' in df.columns:
         upper_app_type = 1
         lower_app_type= 0
@@ -590,10 +594,10 @@ def clean(df1):
         cols.remove('is_default')
         cols.append('is_default')
         df = df.reindex(columns=cols)
-    
+
     return df
-    
-def feature_extract(df1): 
+
+def feature_extract(df1):
     df = df1.copy()
 
     if ('monthly_payment' in df.columns) & ('year_of_loan' in df.columns) & ('debt_loan_ratio' in df.columns):
@@ -627,20 +631,21 @@ def feature_extract(df1):
 
     return df
 
+
 def binning(df1, binning_path = None):
     df = df1.copy()
 
     number_of_bins_of_class = 5
     number_of_bins_of_issue_year = 8
     number_of_bins_of_house_exist = 4
-    number_of_bins_of_earlies_credit_mon            = 7
+    number_of_bins_of_earlies_credit_mon = 7
 
     #  issue_year_labels = range(number_of_bins_of_issue_year)
     #  house_exist_labels = range(number_of_bins_of_house_exist)
     #  earlies_credit_mon_labels = range(number_of_bins_of_earlies_credit_mon)
 
 
-    bin_edges = {} 
+    bin_edges = {}
 
 
     if binning_path is None:
@@ -688,8 +693,6 @@ def encoding(df1):
     df = df1.copy()
 
     encoding_list = ['work_type', 'employer_type', 'industry', 'censor_status', 'use', 'marriage', 'issue_dayofweek', 'issue_year_bin', 'house_exist_bin', 'earlies_credit_mon_bin']
-
-
 
 
     for col in encoding_list:
@@ -783,14 +786,13 @@ def embed_category(df1, col, col_proportions, col_dict, n):
         #      remaining_proportion -= current_col_proportion
         #      current_categories = []
         #      current_col_proportion = 0.0
-                
     #  cols.append(list(current_categories))
-            
+
     #  new_df = pd.DataFrame()
+
     #  for i, categories in enumerate(cols):
     df[col] = df[col].apply(lambda x: col_dict[x] if x in cats else -1)
         #  new_df[col + '_' + str(i+1)] = df[col].apply(lambda x: col_dict[x] if x in categories else 0)
-        
     #  df = pd.concat([df, new_df], axis= 1)
     #  df = df.drop([col], axis = 1)
 
@@ -848,7 +850,7 @@ def aligning(df1, aligning_path):
 
     with open(aligning_path, 'r') as f:
         cols = f.read().strip().split(',')
-    
+
     df = df.reindex(columns=cols)
     return df
 
@@ -867,7 +869,6 @@ def normalization (df1, parameters=None):
     df = df1.copy()
 
     if parameters is None:
-  
         # MixMax normalization
         min_val = {}
         max_val = {}
@@ -879,15 +880,14 @@ def normalization (df1, parameters=None):
             max_val[col] = np.nanmax(df[col])
             if max_val[col] == 0:
                 df[col] = df[col].apply(lambda x: 0)
-            else: 
+            else:
                 df[col] = df[col].apply(lambda x: x / max_val[col])
-          
+
         # Return norm_parameters for renormalization
         norm_parameters = {'min_val': min_val,
                                'max_val': max_val}
 
     else:
-        
         min_val = parameters['min_val']
         max_val = parameters['max_val']
         #  print(max_val)
@@ -899,12 +899,12 @@ def normalization (df1, parameters=None):
             df[col] = df[col].apply(lambda x: min_val[col] if x > max_val[col] else x)
             if max_val[col] == 0:
                 df[col] = df[col].apply(lambda x: 0)
-            else: 
+            else:
                 df[col] = df[col].apply(lambda x: x / max_val[col])
-        norm_parameters = parameters    
+        norm_parameters = parameters
 
     df = pd.DataFrame(df)
-  
+
     return df, norm_parameters
 
 
@@ -922,7 +922,7 @@ def standardization(df1, parameters=None):
     df = df1.copy()
 
     if parameters is None:
-  
+
         # MixMax normalization
         mean_val = {}
         std_val = {}
@@ -934,15 +934,15 @@ def standardization(df1, parameters=None):
             df[col] = df[col].apply(lambda x: x - mean_val[col])
             if std_val[col] == 0:
                 df[col] = df[col].apply(lambda x: 0)
-            else: 
+            else:
                 df[col] = df[col].apply(lambda x: x / std_val[col])
-          
+
         # Return norm_parameters for renormalization
         std_parameters = {'mean_val': mean_val,
                                'std_val': std_val}
 
     else:
-        
+
         mean_val = parameters['mean_val']
         std_val = parameters['std_val']
         #  print(max_val)
@@ -952,14 +952,13 @@ def standardization(df1, parameters=None):
             df[col] = df[col].apply(lambda x: x - mean_val[col])
             if std_val[col] == 0:
                 df[col] = df[col].apply(lambda x: 0)
-            else: 
+            else:
                 df[col] = df[col].apply(lambda x: x / std_val[col])
-        std_parameters = parameters    
+        std_parameters = parameters
 
     df = pd.DataFrame(df)
-  
+
     return df, std_parameters
-    
 
 def fill_nan_with_neg(df1):
     df = df1.copy()

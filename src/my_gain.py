@@ -10,14 +10,14 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-from src.utils import normalization, renormalization, rounding
-from src.utils import xavier_init
-from src.utils import binary_sampler, uniform_sampler, sample_batch_index
+from utils import normalization, renormalization, rounding
+from utils import xavier_init
+from utils import binary_sampler, uniform_sampler, sample_batch_index
 import pickle
 
 config = tf.ConfigProto(
-    intra_op_parallelism_threads=1,
-    inter_op_parallelism_threads=1
+    intra_op_parallelism_threads=0,
+    inter_op_parallelism_threads=0
 )
 
 
@@ -189,7 +189,7 @@ def train_gain(data_x1, gain_parameters, gain_path, norm_parameters_path = None)
         saver.save(sess, gain_path + 'gain.ckpt', global_step = step)
 
 
-            
+
 
 def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
@@ -286,7 +286,7 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
 
 
 
-  
+
     ## GAIN architecture   
     # Input placeholders
     # Data vector
@@ -295,13 +295,13 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
     M = tf.placeholder(tf.float32, shape = [None, dim])
 
     G_sample = generator(X, M)
-            
+
     ## Return imputed data      
-    Z_mb = uniform_sampler(0, 0.01, no, dim) 
+    Z_mb = uniform_sampler(0, 0.01, no, dim)
     M_mb = data_m
-    X_mb = norm_data_x          
-    X_mb = M_mb * X_mb + (1-M_mb) * Z_mb 
-      
+    X_mb = norm_data_x
+    X_mb = M_mb * X_mb + (1-M_mb) * Z_mb
+
     imputed_data = sess.run([G_sample], feed_dict = {X: X_mb, M: M_mb})[0]
 
     imputed_data = data_m * norm_data_x + (1-data_m) * imputed_data
@@ -311,10 +311,9 @@ def impute_data(data_x1,  gain_path, norm_parameters_path = None):
         imputed_data = renormalization(imputed_data, norm_parameters)
 
     # Rounding
-    imputed_data = rounding(imputed_data, data_x)
+    #  imputed_data = rounding(imputed_data, data_x)
 
     imputed_data = pd.DataFrame(imputed_data)
     imputed_data.columns = data_x1.columns 
 
     return imputed_data
-    

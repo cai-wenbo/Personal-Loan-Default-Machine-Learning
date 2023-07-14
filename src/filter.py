@@ -6,10 +6,10 @@ from pandas._libs.tslibs.period import from_ordinals
 from pandas.core.indexes.base import default_pprint
 pd.options.display.max_rows = None
 
-from src.neuro import classifier
+from neuro import classifier
 
-def filte(df1, filter_path, limit):    
-    df  = df1.copy() 
+def filte(df1, filter_path, limit):
+    df  = df1.copy()
     result = classifier(df,  'model/filter/public_filter.pt')
 
     result = result.rename(columns={'is_default': 'judge'})
